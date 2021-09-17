@@ -288,7 +288,7 @@ re-loaded.
 
 In practice, one does not save all of this information, but only what
 cannot be reasonably re-computed in different ways. What is saved
-should also depend on also where in the program's algorithm one
+should also depend on where in the program's algorithm one
 currently is, and one generally finds a convenient point. For the
 current example of step-19, a time dependent problem, one could apply
 the following considerations:

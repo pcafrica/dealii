@@ -87,7 +87,7 @@ using namespace dealii;
 // numbers out in the program (because you will probably never
 // remember which is which, whereas you might have been tempted if
 // they had started at 0).
-namespace Step83
+namespace Step86
 {
   namespace BoundaryIds
   {
@@ -1028,7 +1028,7 @@ namespace Step83
       }
     while (time.is_at_end() == false);
   }
-} // namespace Step83
+} // namespace Step86
 
 
 
@@ -1041,7 +1041,7 @@ int main()
 {
   try
     {
-      Step83::CathodeRaySimulator<2> cathode_ray_simulator_2d;
+      Step86::CathodeRaySimulator<2> cathode_ray_simulator_2d;
       cathode_ray_simulator_2d.run();
     }
   catch (std::exception &exc)
