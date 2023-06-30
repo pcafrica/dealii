@@ -58,6 +58,5 @@ above, we use the
 [BOOST serialization
 library](https://www.boost.org/doc/libs/1_74_0/libs/serialization/doc/index.html)
 for this task, but it is not the only player in town. One could, for
-example, use the [bitsery](https://github.com/fraillt/bitsery) or
-[zpp](https://github.com/eyalz800/serializer) projects instead, both
-of which are said to be substantially faster than BOOST.
+example, use the [bitsery](https://github.com/fraillt/bitsery), [cereal](https://github.com/USCiLab/cereal), or
+[zpp](https://github.com/eyalz800/serializer) projects instead, which can be substantially faster than BOOST.

@@ -63,9 +63,6 @@
 
 #include <fstream>
 
-using namespace dealii;
-
-
 // @sect3{Global definitions}
 
 // As is customary, we put everything that corresponds to the details of the
@@ -87,8 +84,10 @@ using namespace dealii;
 // numbers out in the program (because you will probably never
 // remember which is which, whereas you might have been tempted if
 // they had started at 0).
-namespace Step86
+namespace Step83
 {
+  using namespace dealii;
+
   namespace BoundaryIds
   {
     constexpr types::boundary_id open          = 101;
@@ -137,7 +136,7 @@ namespace Step86
     void create_particles();
     void move_particles();
     void track_lost_particle(
-      const typename Particles::ParticleIterator<dim> &        particle,
+      const typename Particles::ParticleIterator<dim>         &particle,
       const typename Triangulation<dim>::active_cell_iterator &cell);
 
 
@@ -210,7 +209,7 @@ namespace Step86
     , time(0, 1e-4)
   {
     particle_handler.signals.particle_lost.connect(
-      [this](const typename Particles::ParticleIterator<dim> &        particle,
+      [this](const typename Particles::ParticleIterator<dim>         &particle,
              const typename Triangulation<dim>::active_cell_iterator &cell) {
         this->track_lost_particle(particle, cell);
       });
@@ -749,7 +748,7 @@ namespace Step86
   // the hole and increment a counter.
   template <int dim>
   void CathodeRaySimulator<dim>::track_lost_particle(
-    const typename Particles::ParticleIterator<dim> &        particle,
+    const typename Particles::ParticleIterator<dim>         &particle,
     const typename Triangulation<dim>::active_cell_iterator &cell)
   {
     ++n_recently_lost_particles;
@@ -1028,7 +1027,7 @@ namespace Step86
       }
     while (time.is_at_end() == false);
   }
-} // namespace Step86
+} // namespace Step83
 
 
 
@@ -1041,7 +1040,7 @@ int main()
 {
   try
     {
-      Step86::CathodeRaySimulator<2> cathode_ray_simulator_2d;
+      Step83::CathodeRaySimulator<2> cathode_ray_simulator_2d;
       cathode_ray_simulator_2d.run();
     }
   catch (std::exception &exc)
