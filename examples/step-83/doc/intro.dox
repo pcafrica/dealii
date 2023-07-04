@@ -37,7 +37,7 @@ number of reasons why one would want to do that:
 
 - For some of the very largest computations one can do today, with
   tens or hundreds of thousands of processors (this being written in
-  2021), it is not entirely uncommon that one has to expect that a
+  2023), it is not entirely uncommon that one has to expect that a
   node in a supercomputer dies over the course of long run. This could
   be because of hardware failures, system software failures, power
   failures, or any other reason that might affect the stability of the

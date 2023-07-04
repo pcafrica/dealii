@@ -21,10 +21,11 @@
 
 // @sect3{Include files}
 
-// The majority of the include files used in this program are
-// well known from step-6 and similar programs:
+// This program, with the exception of the checkpointing component
+// is identical to step-19
 
 #include <deal.II/base/quadrature_lib.h>
+#include <deal.II/base/discrete_time.h>
 
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/full_matrix.h>
@@ -49,15 +50,6 @@
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/error_estimator.h>
 
-
-// The ones that are new are only the following three: The first declares the
-// DiscreteTime class that helps us keep track of time in a time-dependent
-// simulation. The latter two provide all of the particle functionality,
-// namely a way to keep track of particles located on a mesh (the
-// Particles::ParticleHandler class) and the ability to output these
-// particles' locations and their properties for the purposes of
-// visualization (the Particles::DataOut class).
-#include <deal.II/base/discrete_time.h>
 #include <deal.II/particles/particle_handler.h>
 #include <deal.II/particles/data_out.h>
 
@@ -70,24 +62,7 @@
 // @sect3{Global definitions}
 
 // As is customary, we put everything that corresponds to the details of the
-// program into a namespace of its own. At the top, we define a few constants
-// for which we would rather use symbolic names than hard-coded numbers.
-//
-// Specifically, we define numbers for
-// @ref GlossBoundaryIndicator "boundary indicators"
-// for the various parts of the geometry, as well as the physical properties
-// of electrons and other specifics of the setup we use here.
-//
-// For the boundary indicators, let us start enumerating at some
-// random value 101. The principle here is to use numbers that are
-// *uncommon*. If there are pre-defined boundary indicators previously
-// set by the `GridGenerator` functions, they will likely be small
-// integers starting from zero, but not in this rather randomly chosen
-// range. Using numbers such as those below avoids the possibility for
-// conflicts, and also reduces the temptation to just spell these
-// numbers out in the program (because you will probably never
-// remember which is which, whereas you might have been tempted if
-// they had started at 0).
+// program into a namespace of its own. 
 namespace Step83
 {
   using namespace dealii;
@@ -115,13 +90,9 @@ namespace Step83
 
   // @sect3{The main class}
 
-  // The following is then the main class of this program. It has,
-  // fundamentally, the same structure as step-6 and many other
-  // tutorial programs. This includes the majority of the member
-  // functions (with the purpose of the rest probably self-explanatory
-  // from their names) as well as only a small number of member
-  // variables beyond those of step-6, all of which are related to
-  // dealing with particles.
+  // The following is then the main class of this program. It is,
+  // fundamentally, identical to step-19 with the exception of
+  // the checkpointing component. 
   template <int dim>
   class CathodeRaySimulator
   {
@@ -147,6 +118,9 @@ namespace Step83
     void update_timestep_size(unsigned int timestep_number);
     void output_results(const std::string &basename,
                         unsigned int       timestep_number) const;
+
+    void checkpoint(const unsigned int timestep_number);
+    void restart();
 
     Triangulation<dim>        triangulation;
     MappingQGeneric<dim>      mapping;
@@ -967,6 +941,81 @@ namespace Step83
     }
   }
 
+  // @sect4{CathodeRaySimulator::checkpoint}
+
+  // The checkpoint function of the principal class of this program takes care
+  // of serializing the necessary information namely: the triangulation,
+  // the particle_handler, the time object and the solution vector. 
+  // Theoretically, we do not need to checkpoint to solution vector,
+  // since the electric field is solve for at the beggining of each timestep.
+  // For pedagological purposes, we save the solution vector.
+  template <int dim>
+  void CathodeRaySimulator<dim>::checkpoint(const unsigned int timestep_number)
+  {
+    std::ofstream ofs("checkpoint-" +
+                            Utilities::int_to_string(timestep_number, 4));
+          boost::archive::text_oarchive oa(ofs, boost::archive::no_header);
+
+    oa << triangulation;
+
+    oa << solution;
+    oa << particle_handler;
+
+    oa << next_unused_particle_id;
+    oa << n_recently_lost_particles;
+    oa << n_total_lost_particles;
+    oa << n_particles_lost_through_anode;
+
+    oa << time.get_current_time();
+    oa << time.get_next_step_size();
+
+    // Archive is written destructor is called.
+  }
+
+  // @sect4{CathodeRaySimulator::checkpoint}
+
+  // The restart function of the principal class of this program takes care
+  // of serializing the necessary information namely: the triangulation,
+  // the particle_handler, the time object and the solution vector. 
+  // Theoretically, we do not need to checkpoint to solution vector,
+  // since the electric field is solve for at the beggining of each time step.
+  // For pedagological purposes, we save the solution vector.
+  template <int dim>
+  void CathodeRaySimulator<dim>::restart()
+  {
+    std::ifstream ifs("checkpoint-" +
+                      Utilities::int_to_string(timestep_number, 4));
+
+    boost::archive::text_iarchive ia(ifs, boost::archive::no_header);
+
+    ia >> triangulation;
+
+    ia >> solution;
+    ia >> particle_handler;
+
+    ia >> next_unused_particle_id;
+    ia >> n_recently_lost_particles;
+    ia >> n_total_lost_particles;
+    ia >> n_particles_lost_through_anode;
+
+    double current_time;
+    ia >> current_time;
+
+    double desired_step_size;
+    ia >> desired_step_size;
+
+    time = DiscreteTime(current_time, 1e-4, desired_step_size);
+
+    std::cout << time.get_current_time() << ", "
+              << time.get_next_step_size() << ", "
+              << particle_handler.n_global_particles() << ", "
+              << n_recently_lost_particles << ", "
+              << n_total_lost_particles << ", "
+              << n_particles_lost_through_anode << ", " << std::endl;
+
+  }
+
+
 
   // @sect4{CathodeRaySimulator::run}
 
@@ -996,35 +1045,7 @@ namespace Step83
       {
         // De-serialize checkpoint.
         {
-          std::ifstream ifs("checkpoint-" +
-                            Utilities::int_to_string(timestep_number, 4));
-
-          boost::archive::text_iarchive ia(ifs, boost::archive::no_header);
-
-          ia >> triangulation;
-
-          ia >> solution;
-          ia >> particle_handler;
-
-          ia >> next_unused_particle_id;
-          ia >> n_recently_lost_particles;
-          ia >> n_total_lost_particles;
-          ia >> n_particles_lost_through_anode;
-
-          double current_time;
-          ia >> current_time;
-
-          double desired_step_size;
-          ia >> desired_step_size;
-
-          time = DiscreteTime(current_time, 1e-4, desired_step_size);
-
-          std::cout << time.get_current_time() << ", "
-                    << time.get_next_step_size() << ", "
-                    << particle_handler.n_global_particles() << ", "
-                    << n_recently_lost_particles << ", "
-                    << n_total_lost_particles << ", "
-                    << n_particles_lost_through_anode << ", " << std::endl;
+            restart();
         }
       }
 
@@ -1084,24 +1105,7 @@ namespace Step83
 
         // Serialize checkpoint.
         {
-          std::ofstream ofs("checkpoint-" +
-                            Utilities::int_to_string(timestep_number, 4));
-
-          boost::archive::text_oarchive oa(ofs, boost::archive::no_header);
-          oa << triangulation;
-
-          oa << solution;
-          oa << particle_handler;
-
-          oa << next_unused_particle_id;
-          oa << n_recently_lost_particles;
-          oa << n_total_lost_particles;
-          oa << n_particles_lost_through_anode;
-
-          oa << time.get_current_time();
-          oa << time.get_next_step_size();
-
-          // Archive is written destructor is called.
+          checkpoint();
         }
 
         // TODO.
@@ -1111,8 +1115,8 @@ namespace Step83
     while (time.is_at_end() == false);
   }
 
-} // namespace Step83
 
+} // namespace Step83
 
 
 // @sect3{The <code>main</code> function}
