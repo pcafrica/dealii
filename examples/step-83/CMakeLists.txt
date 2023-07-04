@@ -23,7 +23,7 @@ SET(TARGET_SRC
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
 
-FIND_PACKAGE(deal.II 10.0.0
+FIND_PACKAGE(deal.II 9.6.0
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
   )
 IF(NOT ${deal.II_FOUND})
@@ -34,15 +34,15 @@ IF(NOT ${deal.II_FOUND})
     )
 ENDIF()
 
-IF(NOT DEAL_II_WITH_SUNDIALS) # keep in one line
-  MESSAGE(FATAL_ERROR "
-Error! This tutorial requires a deal.II library that was configured with the following options:
-    DEAL_II_WITH_SUNDIALS = ON
-However, the deal.II library found at ${DEAL_II_PATH} was configured with these options:
-    DEAL_II_WITH_SUNDIALS = ${DEAL_II_WITH_SUNDIALS}
-This conflicts with the requirements."
-    )
-ENDIF()
+#IF(NOT DEAL_II_WITH_SUNDIALS) # keep in one line
+#  MESSAGE(FATAL_ERROR "
+#Error! This tutorial requires a deal.II library that was configured with the following options:
+#    DEAL_II_WITH_SUNDIALS = ON
+#However, the deal.II library found at ${DEAL_II_PATH} was configured with these options:
+#    DEAL_II_WITH_SUNDIALS = ${DEAL_II_WITH_SUNDIALS}
+#This conflicts with the requirements."
+#    )
+#ENDIF()
 
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
